@@ -8,6 +8,7 @@ public class Vuelo {
 	int plazasTotales;
 	int plazasLibres;
 	double precio;
+	String procede;
 	//2018-02-23
 	
 	
@@ -17,7 +18,7 @@ public class Vuelo {
 		
 	}
 	
-	public Vuelo(int id, String origen, String destino, String fecha, double precio, int plazasTotales,	int plazasLibres) {
+	public Vuelo(int id, String origen, String destino, String fecha, double precio, int plazasTotales,	int plazasLibres,String procede) {
 		this.id = id;
 		this.origen = origen;
 		this.destino = destino;
@@ -25,6 +26,7 @@ public class Vuelo {
 		this.precio = precio;
 		this.plazasTotales= plazasTotales;
 		this.plazasLibres = plazasLibres;
+		this.procede = procede;
 		
 	}
 	public Vuelo(String origen, String destino, String fecha) {

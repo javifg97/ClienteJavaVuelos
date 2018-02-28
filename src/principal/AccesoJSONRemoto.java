@@ -1,5 +1,6 @@
 package principal;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import org.json.simple.JSONArray;
@@ -13,20 +14,54 @@ public class AccesoJSONRemoto {
 
 		ApiRequests encargadoPeticiones;
 		private String SERVER_PATH, GET_VUELO, SET_VUELO; // Datos de la conexion
+		
+		HashMap<Integer, Vuelo> hmLeer;
+		HashMap<Integer, Vuelo> hmBuscar;
+		
+		int numeroVuelosLeer;
+		int numeroVuelosBuscar;
 
 		public AccesoJSONRemoto() {
 
 			encargadoPeticiones = new ApiRequests();
 
-			SERVER_PATH = "http://localhost/ACCESO-DATOS-FINAL-VUELOS/PHP/";
+			SERVER_PATH = "http://localhost/Javi/PHP/";
 			GET_VUELO = "verVuelos.php";
 			SET_VUELO = "buscarVuelo.php";
+			hmLeer = new HashMap<Integer, Vuelo>();
+			hmBuscar = new HashMap<Integer, Vuelo>();
+			numeroVuelosLeer=0;
+			numeroVuelosBuscar=0;
 
 		}
 
+		
 		public HashMap<Integer, Vuelo> leerVuelos() {
+			hmLeer = new HashMap<Integer, Vuelo>();
+			//Cambiar la posicion del HM por el id pero eso hace que solo se descargue el del ultimo servicio que llamas
+			//En un caso real creo que no compartirian ids
+			numeroVuelosLeer=0;
+			leerVuelosIberia();
+			
+			leerVuelosRyanair();
+			
 
-			HashMap<Integer, Vuelo> auxhm = new HashMap<Integer, Vuelo>();
+			return hmLeer;
+			
+		}
+		
+		public HashMap<Integer, Vuelo> buscarVuelo(Vuelo vuelo) {
+			hmBuscar = new HashMap<Integer, Vuelo>();
+			numeroVuelosBuscar=0;
+			//buscarVueloIberia(vuelo);
+			buscarVueloRyanair(vuelo);
+			return hmBuscar;
+		}
+		
+		
+		public void leerVuelosRyanair() {
+
+			
 			
 			try {
 
@@ -65,17 +100,26 @@ public class AccesoJSONRemoto {
 							String origen;
 							String destino;
 							String fecha;
-
+							Double precio;
+							int plazasTotales;
+							int plazasLibres;
+							
+							
 							for (int i = 0; i < array.size(); i++) {
 								JSONObject row = (JSONObject) array.get(i);
+								//System.out.println(row.toString());
 
 								id = Integer.parseInt(row.get("id").toString());
 								origen = row.get("origen").toString();
 								destino = row.get("destino").toString();
 								fecha = row.get("fecha").toString();
-								nuevoVuelo = new Vuelo(origen, destino, fecha);
-
-								auxhm.put(id, nuevoVuelo);
+								precio = Double.parseDouble(row.get("precio").toString());
+								plazasTotales = Integer.parseInt(row.get("plazas_totales").toString());
+								plazasLibres = Integer.parseInt(row.get("plazas_libres").toString());
+								nuevoVuelo = new Vuelo(id, origen, destino, fecha, precio, plazasTotales, plazasLibres,"ry");
+								 
+								hmLeer.put(numeroVuelosLeer, nuevoVuelo);
+								numeroVuelosLeer++;
 							}
 
 							System.out.println("Acceso JSON Remoto - Leidos datos correctamente y generado hashmap");
@@ -106,11 +150,66 @@ public class AccesoJSONRemoto {
 				System.exit(-1);
 			}
 
-			return auxhm;
+			
 		}
 		
-		public HashMap<Integer, Vuelo> buscarVuelo(Vuelo auxVuelo) {
-			HashMap<Integer, Vuelo> auxhm = new HashMap<Integer, Vuelo>();
+		public void leerVuelosIberia() {
+
+			
+			
+			try {
+
+
+				JSONObject objPeticion = new JSONObject();
+
+
+
+				// Tenemos el vuelo como objeto JSON. Lo añadimos a una peticion
+				// Lo transformamos a string y llamamos al
+				// encargado de peticiones para que lo envie al PHP
+
+				objPeticion.put("peticion", "leer");
+
+				
+				String json = objPeticion.toJSONString();
+				
+				//System.out.println("Lanzamos peticion JSON para buscar un vuelo");
+				
+				//String url = SERVER_PATH + SET_VUELO;
+				String url = "http://localhost:8080/WBVuelos/MiServlet";
+
+				//System.out.println("La url a la que lanzamos la petición es " + url); // Traza para pruebas
+				System.out.println("La búsqueda que enviamos es: ");
+				System.out.println(json);
+				//System.exit(-1);
+
+				String response = encargadoPeticiones.postRequest(url, json);
+				System.out.println(response);
+				JSONArray respuesta = (JSONArray) JSONValue.parse(response);
+				
+				//System.out.println(respuesta);
+				for (int i = 0; i < respuesta.size(); i++) {
+					JSONObject vueloJson = (JSONObject) respuesta.get(i);
+					
+					Vuelo vueloAux = new Vuelo(Integer.parseInt(vueloJson.get("idVuelo").toString()), vueloJson.get("origen").toString(), vueloJson.get("destino").toString(), vueloJson.get("diayhora").toString(), Double.parseDouble(vueloJson.get("precio").toString()), Integer.parseInt(vueloJson.get("plazas_totales").toString()), Integer.parseInt(vueloJson.get("plazas_libres").toString()),"ib");
+					//System.out.println(vueloAux.toString());
+					hmLeer.put(numeroVuelosLeer, vueloAux);
+					numeroVuelosLeer++;
+				}
+				
+			} catch (Exception e) {
+				System.out.println("Ha ocurrido un error en la busqueda de datos");
+
+				e.printStackTrace();
+
+				System.exit(-1);
+			}
+
+			
+		}
+		
+		public void buscarVueloIberia(Vuelo auxVuelo) {
+			
 			
 			try {
 				JSONObject objVuelo = new JSONObject();
@@ -143,7 +242,7 @@ public class AccesoJSONRemoto {
 				
 				System.out.println("Los vuelos disponibles para la búsqueda realizada son: ");
 				
-				//System.out.println(response); // Traza para pruebas
+				System.out.println(response); // Traza para pruebas
 				//System.exit(-1);
 				
 				// Parseamos la respuesta y la convertimos en un JSONObject
@@ -153,9 +252,11 @@ public class AccesoJSONRemoto {
 				for (int i = 0; i < respuesta.size(); i++) {
 					JSONObject vueloJson = (JSONObject) respuesta.get(i);
 					
-					Vuelo vueloAux = new Vuelo(Integer.parseInt(vueloJson.get("idVuelo").toString()), vueloJson.get("origen").toString(), vueloJson.get("destino").toString(), vueloJson.get("diayhora").toString(), Double.parseDouble(vueloJson.get("precio").toString()), Integer.parseInt(vueloJson.get("plazas_totales").toString()), Integer.parseInt(vueloJson.get("plazas_libres").toString()));
+					Vuelo vueloAux = new Vuelo(Integer.parseInt(vueloJson.get("idVuelo").toString()), vueloJson.get("origen").toString(), vueloJson.get("destino").toString(), vueloJson.get("diayhora").toString(), Double.parseDouble(vueloJson.get("precio").toString()), Integer.parseInt(vueloJson.get("plazas_totales").toString()), Integer.parseInt(vueloJson.get("plazas_libres").toString()),"ib");
+					
 					//System.out.println(vueloAux.toString());
-					auxhm.put(Integer.parseInt(vueloJson.get("idVuelo").toString()), vueloAux);
+					hmBuscar.put(numeroVuelosBuscar, vueloAux);
+					numeroVuelosBuscar++;
 				}
 
 				/*if (respuesta == null) { // Si hay algún error de parseo (json
@@ -189,8 +290,51 @@ public class AccesoJSONRemoto {
 				System.out.println("Fin ejecución");
 				System.exit(-1);
 			}
-			return auxhm;
+			
 
 		}	
 				
+		public void buscarVueloRyanair(Vuelo auxVuelo) {
+			String url = SERVER_PATH + SET_VUELO ;
+			
+			try {
+				JSONObject objVuelo = new JSONObject();
+				JSONObject objPeticion = new JSONObject();
+
+				objVuelo.put("origen", auxVuelo.getOrigen());
+				objVuelo.put("destino", auxVuelo.getDestino());
+				objVuelo.put("fecha", auxVuelo.getFecha());
+
+				// Tenemos el vuelo como objeto JSON. Lo añadimos a una peticion
+				// Lo transformamos a string y llamamos al
+				// encargado de peticiones para que lo envie al PHP
+
+				objPeticion.put("peticion", "buscar");
+				objPeticion.put("vueloBuscar", objVuelo);
+				
+				String json = objPeticion.toJSONString();
+				
+				//System.out.println(url);
+				String response = encargadoPeticiones.postRequest(url, json);
+				//System.out.println(response);
+				JSONObject respuesta = (JSONObject) JSONValue.parse(response.toString());
+				//System.out.println(respuesta);
+				JSONArray vuelos = (JSONArray) respuesta.get("vuelos");
+				
+				//System.out.println(respuesta);
+				for (int i = 0; i < respuesta.size(); i++) {
+					JSONObject vueloJson = (JSONObject) vuelos.get(i);
+					//System.out.println(vueloJson);
+					Vuelo vueloAux = new Vuelo(Integer.parseInt(vueloJson.get("idVuelo").toString()), vueloJson.get("origen").toString(), vueloJson.get("destino").toString(), vueloJson.get("diayhora").toString(), Double.parseDouble(vueloJson.get("precio").toString()), Integer.parseInt(vueloJson.get("plazas_totales").toString()), Integer.parseInt(vueloJson.get("plazas_libres").toString()),"ry");
+					hmBuscar.put(numeroVuelosBuscar, vueloAux);
+					numeroVuelosBuscar++;
+				}
+				//System.out.println(hmBuscar);
+				
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}

@@ -42,9 +42,10 @@ public class Intermediario {
 					pintaVuelos(hm);
 					break;
 				case 2:
-					Vuelo auxVueloBusqueda = this.buscarVuelo();
-					//Vuelo auxVuelo = this.buscarVueloPruebas();
+					//Vuelo auxVueloBusqueda = this.buscarVuelo();
+					Vuelo auxVueloBusqueda = this.buscarVueloPruebas();
 					pintaVuelos(acceso.buscarVuelo(auxVueloBusqueda));
+					break;
 				case 3:
 					//Vuelo auxVueloCompra = this.buscarVuelo();
 					Vuelo auxVueloCompra = this.buscarVueloPruebas();
@@ -52,6 +53,8 @@ public class Intermediario {
 					System.out.println("Selecciona el numero del vuelo que desea comprar");
 					Scanner sc = new Scanner(System.in);
 					int idVuelo = sc.nextInt();
+					
+					break;
 				default:
 					//System.out.println("Opcion invalida: marque un numero de 0 a 2");
 					break;
@@ -66,7 +69,7 @@ public class Intermediario {
 			} catch (Exception e) {
 				System.out.println(
 						"Excepcion desconocida. Traza de error comentada en el método 'ejecucion' de la clase intermediario");
-				// e.printStackTrace();
+				 e.printStackTrace();
 				System.out.println("Fin ejecución");
 				System.exit(-1);
 			}
