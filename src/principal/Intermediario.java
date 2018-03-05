@@ -53,6 +53,8 @@ public class Intermediario {
 					System.out.println("Selecciona el numero del vuelo que desea comprar");
 					Scanner sc = new Scanner(System.in);
 					int idVuelo = sc.nextInt();
+					idVuelo = idVuelo-1;
+					acceso.comprarVuelo(idVuelo);
 					
 					break;
 				default:
